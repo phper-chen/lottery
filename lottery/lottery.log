@@ -1,0 +1,6 @@
+2020/05/27 17:54:49.561464 d.SaveUsers d.db.Exec error(Error 1062: Duplicate entry '0' for key 'uk_phone')
+2020/05/27 17:54:49.561542 s.Participate err(Error 1062: Duplicate entry '0' for key 'uk_phone')
+2020/05/27 17:55:05.980518 d.SaveUsers d.db.Exec error(Error 1062: Duplicate entry '3' for key 'uk_phone')
+2020/05/27 17:55:05.980591 s.Participate err(Error 1062: Duplicate entry '3' for key 'uk_phone')
+2020/05/27 17:55:07.616907 d.SaveUsers d.db.Exec error(Error 1062: Duplicate entry '3' for key 'uk_phone')
+2020/05/27 17:55:07.616946 s.Participate err(Error 1062: Duplicate entry '3' for key 'uk_phone')

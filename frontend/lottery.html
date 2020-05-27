@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta content="black" name="apple-mobile-web-app-status-bar-style">
+    <meta content="telephone=no" name="format-detection">
+    <meta content="email=no" name="format-detection">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
+    <meta name="x5-orientation" content="portrait">
+    <title>大转盘</title>
+
+</head>
+
+<style>
+    .box {
+        margin: 6vh auto;
+        width: 20vw;
+        height: 20vw;
+        position: relative;
+        border-radius: 100%;
+        display: flex;
+        flex-flow: row wrap;
+        overflow: hidden;
+    }
+
+    .draw_item {
+        width: 10vw;
+        height: 10vw;
+        text-align: center;
+        line-height: 10vw;
+        font-size: 1vw;
+        color: #fff;
+    }
+
+    .needle {
+        position: absolute;
+        top: 9vw;
+        left: 8.3vw;
+        font-size: 1vw;
+        color: #fff;
+        font-weight: bold;
+        text-align: center;
+        line-height: 2vw;
+    }
+    .export {
+        width: 20vw;
+        height: 8vw;
+        margin: auto;
+        text-align: center;
+        display: block;
+    }
+    button{
+        width: 20vw;
+        height: 8vw;
+        margin: auto;
+        display: block;
+    }
+
+    form{
+        width: 600px;
+        margin:20px auto;
+    }
+    form>fieldset{
+        padding: 10px;
+    }
+    form>fieldset>meter,
+    form>fieldset>input{
+        width: 100%;
+        height:40px;
+        line-height: 40px;
+        margin:10px auto;
+        border-radius: 4px;
+        font-size: 16px;
+        padding-left: 5px;
+        box-sizing: border-box;
+    }
+</style>
+
+<body>
+<form id="go" onsubmit="return false">
+    <fieldset>
+        <legend>参赛信息</legend>
+        <label for="phone">手机号码：</label>
+        <input type="tel" name="phone" id="phone"  placeholder="11位手机号" pattern="^1\d{10}$">
+        <label for="verify_code">校验码：</label>
+        <input type="text" name="verify_code" id="verify_code" placeholder="校验码">
+        <label for="article">参与文章：</label>
+        <textarea name="article" cols="100" rows="5" placeholder="大于10字，500字以内" minlength="10" maxlength="500"></textarea>
+        <input type="submit" name="">
+    </fieldset>
+
+</form>
+<div class="box">
+
+    <div class="needle">----></div>
+</div>
+
+<button id="btn">开启转盘</button>
+<a class="export" href="http://127.0.0.1:8080/lottery/export">中奖表单导出</a>
+<a class="export" id="userList" href="javascript:void(0)">展示所有参与人员的信息</a>
+
+
+<script type="text/javascript" src="js/jquery2.1.1.min.js"></script>
+<script type="text/javascript" src="js/jQueryRotate.js"></script>
+
+<script>
+    $(function () {
+        var colors = ['red', 'orange', 'green', 'gold']
+        var rotates = [225, 315, 135, 45]
+        var list = new Promise((resolve, reject) => {
+            $.ajax({ url: "http://127.0.0.1:8080/lottery/list",}).done( data => {
+                var rotateFns = [];
+                if (data === null || data.list === null) {
+                    reject(rotateFns)
+                }
+                data.list.unshift({name: '谢谢参与', prize_id: -1});
+                var appends  = "";
+
+                data.list.forEach((v, i) => {
+                    rotateFns.push([v.prize_id, rotates[i], v.name]);
+                    appends += '<div class="draw_item" style="background:' + colors[i] + ';">' + v.name + '</div>'
+                });
+                if (appends === "") {
+                    resolve(rotateFns)
+                }
+                // console.log(appends)
+                $('.box').prepend(appends);
+                resolve(rotateFns)
+            })
+        });
+        list.then( rotateFns => {
+            $('#btn').click(function() {
+
+                if(!bRotate){
+                    alert("没有抽奖机会了");
+                    return;
+                }
+                bRotate = !bRotate;
+                var getPrize = new Promise((resolve, reject) => {
+                    $.ajax({ url: "http://127.0.0.1:8080/lottery/draw",}).done(data => {
+                        if (data === null || data.list === null) {
+                            reject(null);
+                        }
+                        resolve(data);
+                    });
+                });
+                getPrize.then( item => {
+                    if (item === null || !item.is_win) {
+                        return rotateFn(rotateFns[0][0], rotateFns[0][1], rotateFns[0][2]);
+                    }
+                    rotateFns.forEach(v => {
+                        if (v[0] === item.prize && item.is_win) {
+                            console.log(item.prize, item.is_win)
+                            return rotateFn(v[0], v[1], v[2]);
+                        }
+                    });
+                });
+
+            });
+        });
+    });
+
+    $("#go").submit(function() {
+        $.ajax({
+            url: "http://127.0.0.1:8080/lottery/participate",
+            type : "POST",
+            data: $('#go').serialize(),
+            dataType:'json',
+            //请求成功
+            success:function(data) {
+                console.log(data);
+            }
+        });
+    });
+
+    //是否可以抽奖
+    var bRotate = true;
+    var rotateFn = function (awards, angles, txt) {
+        var selector = $('.needle')
+        selector.stopRotate();
+        selector.rotate({
+            angle: 0,
+            animateTo: angles + 2520,
+            duration: 7000,
+            callback: function() {
+
+                //抽奖结果
+                alert(txt);
+
+            }
+        })
+    };
+
+    $('#userList').click(function() {
+        $.ajax({ url: "http://127.0.0.1:8080/lottery/users", type: "GET"}).done(data => {
+            if (data === null || data.list === null) {
+                reject(null);
+            }
+            console.log(data);
+        });
+    });
+
+</script>
+
+</body>
+
+</html>

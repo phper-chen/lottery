@@ -3,7 +3,7 @@
 * 放在GOPATH下，开启go mod模式，要求go1.3以上
 * 进入lottery/local/，执行docker-compose up -d启动mysql和redis
 * 进入mysql执行lottery.sql文件，建表和预插入奖品数据
-* 进入lottery/cmd/，执行make启动service服务
+* 进入lottery/Makefile，执行make启动service服务
 * 在浏览器中打开frontend/lottery.html前端界面
 
 ## 已实现：
